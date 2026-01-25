@@ -1,4 +1,4 @@
-export const users = [
+[
   {
     id: 1,
     first_name: "Melony",
@@ -28,10 +28,10 @@ export const users = [
     gender: "Female",
   },
   {
+    first_name: "Ahmed",
+    last_name: "Ali",
+    email: "ahmedali123@gmail.com",
+    gender: "male",
     id: 5,
-    first_name: "Katharina",
-    last_name: "Beagrie",
-    email: "kbeagrie4@livejournal.com",
-    gender: "Bigender",
   },
 ];
