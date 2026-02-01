@@ -1,6 +1,8 @@
 import express from "express";
 import mongoose from "mongoose";
 
+import { userRoutes } from "./routes/userRoutes.js";
+
 const app = express();
 
 app.use(express.json());
@@ -14,56 +16,16 @@ mongoose
     console.log(err);
   });
 
-const UserSchema = new mongoose.Schema({
-  name: String,
-  age: Number,
-  gender: String,
-});
-
-const User = mongoose.model("User", UserSchema);
-
 app.get("/", (req, res) => {
   res.send("Hi");
 });
 
-app.get("/users", async (req, res) => {
-  const users = await User.find();
 
-  res.send(users);
-});
+// user routes 
+app.use("/users", userRoutes);
 
-app.get("/users/:id", async (req, res) => {
-  const user = await User.findById(req.params.id);
+// courses routes
 
-  res.send(user);
-});
-
-app.post("/users", async (req, res) => {
-  const user = await User.create(req.body);
-
-  res.send(user);
-});
-
-app.put("/users/:id", async (req, res) => {
-  const userId = req.params.id;
-  const data = req.body;
-
-  const user = await User.findByIdAndUpdate(userId, data, { new: true });
-
-  res.send(user);
-});
-
-app.delete("/users/:id", async (req, res) => {
-  const userId = req.params.id;
-
-  await User.findByIdAndDelete(userId);
-
-  res.send("User Deleted!");
-});
-
-app.get("/products", (req, res) => {
-  res.send("All Products");
-});
 
 app.listen(3000, () => {
   console.log("Server running on port 3000");
