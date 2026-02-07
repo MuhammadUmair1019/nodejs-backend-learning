@@ -1,8 +1,9 @@
 import express from "express";
 import mongoose from "mongoose";
-import bcrypt from "bcrypt";
 
-import User from "./models/userModel.js";
+// Routes
+import { router } from "./routes/userRoutes.js";
+import { authMiddleware } from "./middleware/authMiddleware.js";
 
 const port = 3000;
 const app = express();
@@ -23,39 +24,14 @@ app.get("/", (req, res) => {
 });
 
 // user routes
-app.post("/register", async (req, res) => {
-  const { name, email, password } = req.body || {};
+app.use("/api", router);
 
-  const hashPassword = await bcrypt.hash(password, 10);
+// middleware
+app.use(authMiddleware);
 
-  const user = await User.create({
-    name,
-    email,
-    password: hashPassword,
-  });
-
-  res.json(user);
+app.get("/api/products", async (req, res) => {
+  res.send("Products");
 });
-
-app.post("/login", async (req, res) => {
-  const { email, password } = req.body || {};
-
-  const [user] = await User.find({ email });
-
-  if (!user) {
-    return res.status(400).send("User not found!");
-  }
-
-  const passwordMatch = await bcrypt.compare(password, user.password);
-
-  if (passwordMatch) {
-    res.json(user);
-  } else {
-    res.status(400).json({ message: "Password not match!" });
-  }
-});
-
-// app.get("/products")
 
 app.listen(port, () => {
   console.log(`Server listing on port ${port}`);
