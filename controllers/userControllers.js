@@ -1,59 +1,64 @@
 import bcrypt from "bcrypt";
-
 import jwt from "jsonwebtoken";
-
 import User from "../models/userModel.js";
 
-export const SECRET_KEY = "psYxwsDx6XvFe6BxBMJEphEUG8ucMc30dggtAHiB1bf";
+export const register = async (req, res, next) => {
+  try {
+    const { name, email, password } = req.body || {};
 
-export const register = async (req, res) => {
-  const { name, email, password } = req.body || {};
+    const hashPassword = await bcrypt.hash(password, 10);
 
-  const hashPassword = await bcrypt.hash(password, 10);
+    const user = await User.create({
+      name,
+      email,
+      password: hashPassword,
+    });
 
-  const user = await User.create({
-    name,
-    email,
-    password: hashPassword,
-  });
-
-  const token = jwt.sign(
-    {
-      userId: user._id,
-    },
-    SECRET_KEY,
-    {
-      expiresIn: "24hr",
-    },
-  );
-
-  res.json({ token });
-};
-
-export const login = async (req, res) => {
-  const { email, password } = req.body || {};
-
-  const [user] = await User.find({ email });
-
-  if (!user) {
-    return res.status(400).send("User not found!");
-  }
-
-  const passwordMatch = await bcrypt.compare(password, user.password);
-
-  if (passwordMatch) {
     const token = jwt.sign(
-      {
-        userId: user._id,
-      },
-      SECRET_KEY,
-      {
-        expiresIn: "24hr",
-      },
+      { userId: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: "24h" },
     );
 
-    res.json({ token });
-  } else {
-    res.status(400).json({ message: "Password not match!" });
+    res.json({ token, role: user.role });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const login = async (req, res, next) => {
+  try {
+    const { email, password } = req.body || {};
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(400).json({ message: "User not found!" });
+    }
+
+    const passwordMatch = await bcrypt.compare(password, user.password);
+
+    if (!passwordMatch) {
+      return res.status(400).json({ message: "Password not match!" });
+    }
+
+    const token = jwt.sign(
+      { userId: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: "24h" },
+    );
+
+    res.json({ token, role: user.role });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getProfile = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.userId).select("-password");
+    res.json(user);
+  } catch (error) {
+    next(error);
   }
 };
