@@ -6,6 +6,7 @@ import multer from "multer";
 
 import path from "path";
 import { fileURLToPath } from "url";
+import { createClient } from "redis";
 
 // Routes
 import { router as userRoutes } from "./routes/userRoutes.js";
@@ -26,6 +27,16 @@ const app = express();
 
 app.use(express.json());
 // app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
+const redisClient = createClient({
+  url: "redis://localhost:6379"
+  // url: "redis://default:TBNIWA9JbAQv751AuMJnFpSdGZzdPCtI@redis-10121.c261.us-east-1-4.ec2.cloud.redislabs.com:10121"
+});
+
+redisClient.on("error", (err) => console.log("Redis Error:", err));
+
+await redisClient.connect();
+console.log("Redis Connected ✅");
 
 mongoose
   .connect(process.env.MONGODB_URI)
@@ -134,6 +145,67 @@ app.post("/upload", upload.single("file"), async (req, res) => {
       error: error.message
     });
   }
+});
+
+let cache = {
+  data: null,
+  expiry: null
+}
+
+app.get("/user", async (req, res) => {
+  res.send("Hello World");
+
+  if (cache.users) {
+    return res.json(cache.users);
+  }
+
+  const users = await fetch("https://jsonplaceholder.typicode.com/users");
+  const data = await users.json();
+  cache.users = data;
+  res.json(data);
+
+});
+
+app.get("/products",async(req,res)=>{
+  if(cache.data && cache.expiry > Date.now()){
+    return res.json(cache.products);
+  }
+
+  const products = await fetch("https://jsonplaceholder.typicode.com/products");
+  const data = await products.json();
+  cache.data = data;
+  cache.expiry = Date.now() + 60000;
+  res.json(data);
+});
+
+
+
+// Fake slow DB function
+const fetchUsersFromDB = async () => {
+  console.log("Fetching from DB...");
+  await new Promise((resolve) => setTimeout(resolve, 3000)); // 3 sec delay
+  return [
+    { id: 1, name: "Umair" },
+    { id: 2, name: "Ali" }
+  ];
+};
+
+
+app.get("/users", async (req, res) => {
+  const cachedUsers = await redisClient.get("users");
+
+  if (cachedUsers) {
+    console.log("Serving from Redis Cache ⚡");
+    return res.json(JSON.parse(cachedUsers));
+  }
+
+  // redis-cli -u redis://default:TBNIWA9JbAQv751AuMJnFpSdGZzdPCtI@redis-10121.c261.us-east-1-4.ec2.cloud.redislabs.com:10121
+  const users = await fetchUsersFromDB();
+
+  // Store in redis for 60 seconds
+  await redisClient.setEx("users", 60, JSON.stringify(users));
+
+  res.json(users);
 });
 
 
