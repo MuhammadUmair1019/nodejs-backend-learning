@@ -1,0 +1,30 @@
+{
+  "name": "module-04",
+  "version": "1.0.0",
+  "description": "\"# nodejs-backend-learning\"",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MuhammadUmair1019/nodejs-backend-learning.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/MuhammadUmair1019/nodejs-backend-learning/issues"
+  },
+  "homepage": "https://github.com/MuhammadUmair1019/nodejs-backend-learning#readme",
+  "dependencies": {
+    "bullmq": "^5.71.1",
+    "ioredis": "^5.10.1",
+    "node-cron": "^4.2.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
